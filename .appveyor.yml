@@ -1,29 +1,17 @@
+image: Ubuntu2004  # образ для сборки
 
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+stack: jdk 11  # версия JDK
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+branches:
+  only:
+    - master  # ветка git
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+build: off  # будем использовать свой скрипт сборки
 
-    - name: Build with Gradle
-      run: ./gradlew build
+install:
+  # запускаем SUT (& означает, что в фоновом режиме не блокируем терминал для запуска тестов)
+  - java -jar ./artifacts/app-mbank.jar &
+  - chmod +x gradlew
 
-    # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
-    # the publishing section of your build.gradle
-    - name: Publish to GitHub Packages
-      run: ./gradlew publish
-      env:
-        USERNAME: ${{ github.actor }}
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+build_script:
+  - ./gradlew test --info  # запускаем тест, флаг --info позволяет выводить больше информации
